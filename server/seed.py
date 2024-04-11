@@ -1,7 +1,7 @@
 from app import app, db
-from server.models import User
-from server.models import Game
-from server.models import Review
+from app import User
+from app import Game
+from app import Review
 
 def seed_data():
     user1 = User(user_name='nia', email='nia@gmail.com')
