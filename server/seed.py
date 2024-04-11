@@ -1,110 +1,25 @@
-#!/usr/bin/env python3
+from app import app, db
+from server.models import User
+from server.models import Game
+from server.models import Review
 
-from random import randint, choice as rc
-
-from faker import Faker
-
-from app import app
-from models import db, Game, Review, User
-
-genres = [
-    "Platformer",
-    "Shooter",
-    "Fighting",
-    "Stealth",
-    "Survival",
-    "Rhythm",
-    "Survival Horror",
-    "Metroidvania",
-    "Text-Based",
-    "Visual Novel",
-    "Tile-Matching",
-    "Puzzle",
-    "Action RPG",
-    "MMORPG",
-    "Tactical RPG",
-    "JRPG",
-    "Life Simulator",
-    "Vehicle Simulator",
-    "Tower Defense",
-    "Turn-Based Strategy",
-    "Racing",
-    "Sports",
-    "Party",
-    "Trivia",
-    "Sandbox"
-]
-
-platforms = [
-    "NES",
-    "SNES",
-    "Nintendo 64",
-    "GameCube",
-    "Wii",
-    "Wii U",
-    "Nintendo Switch",
-    "GameBoy",
-    "GameBoy Advance",
-    "Nintendo DS",
-    "Nintendo 3DS",
-    "XBox",
-    "XBox 360",
-    "XBox One",
-    "XBox Series X/S",
-    "PlayStation",
-    "PlayStation 2",
-    "PlayStation 3",
-    "PlayStation 4",
-    "PlayStation 5",
-    "PSP",
-    "PS Vita",
-    "Genesis",
-    "DreamCast",
-    "PC",
-]
-
-fake = Faker()
-
-with app.app_context():
-
-    Review.query.delete()
-    User.query.delete()
-    Game.query.delete()
-
-    users = []
-    for i in range(100):
-        u = User(name=fake.name(),)
-        users.append(u)
-
-    db.session.add_all(users)
-
-    games = []
-    for i in range(100):
-        g = Game(
-            title=fake.sentence(),
-            genre=rc(genres),
-            platform=rc(platforms),
-            price=randint(5, 60),
-        )
-        games.append(g)
-
-    db.session.add_all(games)
-
-    reviews = []
-    for u in users:
-        for i in range(randint(1, 10)):
-            r = Review(
-                score=randint(0, 10),
-                comment=fake.sentence(),
-                user=u,
-                game=rc(games))
-            reviews.append(r)
-
-    db.session.add_all(reviews)
-
-    for g in games:
-        r = rc(reviews)
-        g.review = r
-        reviews.remove(r)
-
+def seed_data():
+    user1 = User(user_name='nia', email='nia@gmail.com')
+    user2 = User(user_name='john', email='john@gmail.com')
+    db.session.add_all([user1, user2])
     db.session.commit()
+
+    game1 = Game(title='Game 1', description='This is game 1')
+    game2 = Game(title='Game 2', description='This is game 2')
+    db.session.add_all([game1, game2])
+    db.session.commit()
+
+    review1 = Review(score=5, comment='Great game!', user_id=user1.id, game_id=game1.id)
+    review2 = Review(score=4, comment='Good game!', user_id=user2.id, game_id=game2.id)
+    db.session.add_all([review1, review2])
+    db.session.commit()
+
+if __name__ == '__main__':
+    app = app()
+    db.init_app(app)
+    seed_data()
