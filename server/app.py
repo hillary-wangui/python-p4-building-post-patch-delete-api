@@ -1,10 +1,6 @@
 #!/usr/bin/env python3
 
-from flask import Flask, request, make_response
-from flask_sqlalchemy import SQLAlchemy
-from flask_migrate import Migrate
-
-from models import db, User, Review, Game
+from flask import Flask, request, make_response,jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 
@@ -28,11 +24,16 @@ def games():
 
     games = []
     for game in Game.query.all():
-        game_dict = game.to_dict()
+        game_dict = {
+            "title": game.title,
+            "genre": game.genre,
+            "platform": game.platform,
+            "price": game.price,
+        }
         games.append(game_dict)
 
     response = make_response(
-        games,
+        jsonify(games),
         200
     )
 
@@ -41,11 +42,11 @@ def games():
 @app.route('/games/<int:id>')
 def game_by_id(id):
     game = Game.query.filter(Game.id == id).first()
-
+    
     game_dict = game.to_dict()
 
     response = make_response(
-        game_dict,
+        jsonify(game_dict),
         200
     )
 
@@ -61,18 +62,18 @@ def reviews():
             reviews.append(review_dict)
 
         response = make_response(
-            reviews,
+            jsonify(reviews),
             200
         )
-
+    
         return response
-
+    
     elif request.method == 'POST':
         new_review = Review(
             score=request.form.get("score"),
             comment=request.form.get("comment"),
             game_id=request.form.get("game_id"),
-            user_id=request.form.get("user_id"),
+            user_id=request.form.get("user_id"),  
         )
 
         db.session.add(new_review)
@@ -81,67 +82,69 @@ def reviews():
         review_dict = new_review.to_dict()
 
         response = make_response(
-            review_dict,
+            jsonify(review_dict),
             201
         )
 
         return response
 
-@app.route('/reviews/<int:id>', methods=['GET', 'PATCH', 'DELETE'])
+@app.route('/reviews/<int:id>', methods=['GET','PATCH','DELETE'])
 def review_by_id(id):
-    review = Review.query.filter(Review.id == id).first()
+    review = Review.query.filter_by(id=id).first()
 
     if review == None:
         response_body = {
             "message": "This record does not exist in our database. Please try again."
         }
-        response = make_response(response_body, 404)
+        response = make_response(jsonify(response_body), 404)
 
         return response
-
+    
     else:
-        if request.method == 'GET':
-            review_dict = review.to_dict()
-
-            response = make_response(
-                review_dict,
-                200
-            )
-
-            return response
-
-        elif request.method == 'PATCH':
-            for attr in request.form:
-                setattr(review, attr, request.form.get(attr))
-
-            db.session.add(review)
-            db.session.commit()
-
-            review_dict = review.to_dict()
-
-            response = make_response(
-                review_dict,
-                200
-            )
-
-            return response
-
-        elif request.method == 'DELETE':
-            db.session.delete(review)
-            db.session.commit()
-
-            response_body = {
-                "delete_successful": True,
-                "message": "Review deleted."
-            }
-
-            response = make_response(
-                response_body,
-                200
-            )
-
-            return response
-
+       if request.method == 'GET':
+           review_dict = review.to_dict()
+   
+           response = make_response(
+               jsonify(review_dict),
+               200
+           )
+   
+           return response
+       
+       elif request.method == 'PATCH':
+           review = Review.query.filter_by(id=id).first()
+   
+           for attr in request.form:
+               setattr(review, attr, request.form.get(attr))
+   
+           db.session.add(review)
+           db.session.commit()
+   
+           review_dict = review.to_dict()
+   
+           response = make_response(
+               jsonify(review_dict),
+               200
+           )
+   
+           return response
+       
+       elif request.method == 'DELETE':
+           db.session.delete(review)
+           db.session.commit()
+   
+           response_body = {
+               "delete_successful": True,
+               "message": "Review deleted."
+           }
+   
+           response = make_response(
+               jsonify(response_body),
+               200
+           )
+   
+           return response
+   
 @app.route('/users')
 def users():
 
@@ -151,7 +154,7 @@ def users():
         users.append(user_dict)
 
     response = make_response(
-        users,
+        jsonify(users),
         200
     )
 
